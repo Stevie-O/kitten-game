@@ -1072,8 +1072,11 @@ dojo.declare("com.nuclearunicorn.game.village.KittenSim", null, {
 		}
 
 		if (optimization) {
-			freeKittens.sort(function(a, b){return b.val-a.val;});
-			freeKittens.sort(function(a, b){return b.rank-a.rank;});
+			freeKittens.sort(function(a, b){
+				var score = b.rank - a.rank;
+				if (score == 0) { score = b.val - a.val; }
+				return score;
+			});
 		}
 
 		if (freeKittens.length){
