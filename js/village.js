@@ -492,14 +492,29 @@ dojo.declare("classes.managers.VillageManager", com.nuclearunicorn.core.TabManag
 			jobs: this.filterMetadata(this.jobs, ["name", "unlocked", "value"])
 		};
 	},
+	
+	_rebuildWorkshopCache: function(game, cache){
+		// erase all craft counts
+		game.workshop.clearEngineers();
+		// @param cache is the recalculated data
+		for (var speciality in cache){
+			var workerCount = cache[speciality];
+			var craftObj = game.workshop.getCraft(speciality);
+			craftObj.value += workerCount;
+		}
+	},
 
-	load: function(saveData){
+	load: function(saveData, loadctx){
 		if (saveData.village){
 			var kittens = saveData.village.kittens;
 			//quick legacy hack, remove in future
 			if (!kittens.length) {
 				kittens = [];
 			}
+
+			// schedule a call to rebuildWorkshopCache() after we finish loading the game
+			var speciality_cache = {};
+			loadctx.cacheRebuild.push(function(game) { game.village._rebuildWorkshopCache(game, speciality_cache); });
 
 			this.sim.kittens = [];
 
@@ -508,6 +523,14 @@ dojo.declare("classes.managers.VillageManager", com.nuclearunicorn.core.TabManag
 
 				var newKitten = new com.nuclearunicorn.game.village.Kitten();
 				newKitten.load(kitten);
+
+				// while we're loading, keep track of any engineers that are currently crafting things
+				if (newKitten.job == 'engineer' && newKitten.engineerSpeciality)
+				{
+					var speciality = newKitten.engineerSpeciality;
+					if (speciality in speciality_cache) { speciality_cache[speciality]++; }
+					else { speciality_cache[speciality] = 1; }
+				}
 
 				if (newKitten.isLeader){
 					this.game.village.leader = newKitten;

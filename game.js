@@ -1316,16 +1316,24 @@ dojo.declare("com.nuclearunicorn.game.ui.GamePage", null, {
 				if (!saveData.saveVersion || saveData.saveVersion != this.saveVersion) {
 					this.migrateSave(saveData);
 				}
+				
+				var loadctx = {
+					cacheRebuild: []
+				};
 
-				this.resPool.load(saveData);
-				this.village.load(saveData);
-				this.calendar.load(saveData);
-				this.console.static.load(saveData);
+				this.resPool.load(saveData, loadctx);
+				this.village.load(saveData, loadctx);
+				this.calendar.load(saveData, loadctx);
+				this.console.static.load(saveData, loadctx);
 				this.ui.renderFilters();
 
                 for (var i in this.managers){
-                    this.managers[i].load(saveData);
+                    this.managers[i].load(saveData, loadctx);
                 }
+
+				// if any components registered callbacks to rebuild caches, invoke them now
+				var game_this = this;
+				loadctx.cacheRebuild.forEach(function(f){f(game_this);});
 
 				dojo.publish("server/load", saveData);
 			}
