@@ -1985,7 +1985,23 @@ dojo.declare("classes.managers.WorkshopManager", com.nuclearunicorn.core.TabMana
 		};
 	},
 
-	load: function(saveData){
+	_rebuildEngineerCache: function(game, loadctx){
+		var engineerInfo = loadctx.engineerInfo;
+
+		if (engineerInfo){
+			this.clearEngineers();
+			
+			for (var speciality in engineerInfo){
+				var workerList = engineerInfo[speciality];
+				var craftObj = this.getCraft(speciality);
+				craftObj.value += workerList.length;
+			}
+
+		}
+
+	},
+
+	load: function(saveData, loadctx){
 		if (!saveData["workshop"]){
 			return;
 		}
@@ -2004,6 +2020,13 @@ dojo.declare("classes.managers.WorkshopManager", com.nuclearunicorn.core.TabMana
 					this.game.unlock(upgrade.unlocks);
 				}
 			}
+		}
+
+		if (loadctx.engineerInfo){
+			this._rebuildEngineerCache(this.game, loadctx);
+		}else{
+			// schedule a callback when everything's done
+			loadctx.cacheRebuild.push(dojo.hitch(this, _rebuildEngineerCache));
 		}
 
 	},

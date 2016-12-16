@@ -493,13 +493,17 @@ dojo.declare("classes.managers.VillageManager", com.nuclearunicorn.core.TabManag
 		};
 	},
 
-	load: function(saveData){
+	load: function(saveData, loadctx){
 		if (saveData.village){
 			var kittens = saveData.village.kittens;
 			//quick legacy hack, remove in future
 			if (!kittens.length) {
 				kittens = [];
 			}
+
+			// build up a cache of engineer specialities; this will be used by the workshop code to rebuild its engineer cache
+			var speciality_cache = {};
+			loadctx.engineerInfo = speciality_cache;
 
 			this.sim.kittens = [];
 
@@ -508,6 +512,15 @@ dojo.declare("classes.managers.VillageManager", com.nuclearunicorn.core.TabManag
 
 				var newKitten = new com.nuclearunicorn.game.village.Kitten();
 				newKitten.load(kitten);
+
+				// while we're loading, keep track of any engineers that are currently crafting things
+				if (newKitten.job == 'engineer' && newKitten.engineerSpeciality)
+				{
+					var speciality = newKitten.engineerSpeciality;
+					var spec_list = speciality_cache[speciality];
+					if (!spec_list) { spec_list = speciality_cache[speciality] = []; }
+					spec_list.push(newKitten);
+				}
 
 				if (newKitten.isLeader){
 					this.game.village.leader = newKitten;
